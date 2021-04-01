@@ -11,6 +11,9 @@ jobs:
     services:
       splunk:
         image: splunk/splunk:latest
+        env:
+          SPLUNK_START_ARGS: --accept-license
+          SPLUNK_PASSWORD: test_password
 
     steps:
       - uses: actions/checkout@v2
