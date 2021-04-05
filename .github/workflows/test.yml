@@ -29,9 +29,10 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: set up test config
-        run: echo host=splunk >> $HOME/.splunkrc && echo username=admin >> $HOME/.splunkrc && echo password=test_password >> $HOME/.splunkrc
       - name: Unit Test
         run: mvn -P Unittest -B verify --file pom.xml
       - name: Acceptance Test
         run: mvn -P AcceptanceTest -B verify --file pom.xml
+        env:
+          SPLUNK_PASSWORD: test_password
+          SPLUNK_HOST: splunk
