@@ -18,9 +18,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
       - name: build
         run: mvn -B package --file pom.xml
-      - name: Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
 #          body_path: ${{ github.workflow }}-CHANGELOG.txt
@@ -28,3 +30,8 @@ jobs:
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to Artifactory
+        run: mvn --batch-mode deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
