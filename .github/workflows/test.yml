@@ -12,6 +12,8 @@ jobs:
           - 11
         os:
           - ubuntu-latest
+          - windows-latest
+          - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -30,13 +32,18 @@ jobs:
         run: mvn -P Unittest -B verify --file pom.xml
 
   acceptance-test:
+    needs: unit-test
+    strategy:
+      matrix:
+        splunk-version:
+          - 8.1
+          - 7.3
     runs-on: ubuntu-latest
     container: maven:3-jdk-8
-    needs: unit-test
 
     services:
       splunk:
-        image: splunk/splunk:latest
+        image: splunk/splunk:${{matrix.splunk-version}}
         env:
           SPLUNK_START_ARGS: --accept-license
           SPLUNK_PASSWORD: test_password
@@ -49,6 +56,18 @@ jobs:
           - 10668/udp
 
     steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Acceptance Test
         run: mvn -P AcceptanceTest -B verify --file pom.xml
         env:
