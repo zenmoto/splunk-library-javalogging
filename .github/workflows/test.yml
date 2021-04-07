@@ -4,10 +4,35 @@ on:
   [push, pull_request]
 
 jobs:
-  build:
+  unit-test:
+    strategy:
+      matrix:
+        java-version:
+          - 1.8
+          - 11
+        os:
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Unit Test
+        run: mvn -P Unittest -B verify --file pom.xml
 
+  acceptance-test:
     runs-on: ubuntu-latest
     container: maven:3-jdk-8
+    needs: unit-test
 
     services:
       splunk:
@@ -24,13 +49,6 @@ jobs:
           - 10668/udp
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
-      - name: Unit Test
-        run: mvn -P Unittest -B verify --file pom.xml
       - name: Acceptance Test
         run: mvn -P AcceptanceTest -B verify --file pom.xml
         env:
